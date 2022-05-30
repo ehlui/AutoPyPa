@@ -1,33 +1,29 @@
 #!/bin/bash
 
-MIN_LEN_REMOTE_REPO=10
 PROJECT_REMOTE_REPO=
 PATH_REQ_PROJECT=$(find ./templates -type f -name "requirements.txt")
 
+
 clone_project(){
     git clone $PROJECT_REMOTE_REPO ./templates/src/
-
     # If it founds one single requirements.txt
     if [[ "${#PATH_REQ_PROJECT[@]}" == 1 ]] 
         then
           # We need to copy it to have it within the package and 
           # know what dependencies have our project
-           cp $PATH_REQ_PROJECT ./core/src
+            cp $PATH_REQ_PROJECT ./core/src
         else
             echo "ERROR: More than one requeriments.txt found!"
             exit
     fi  
-
 }
 
 copy_templates(){
   mkdir core
-  
   if [ ! -z "$PROJECT_REMOTE_REPO" ]
     then
       clone_project
     fi
-
     cp -a ./templates/ ./core
 }
 
@@ -38,7 +34,6 @@ build(){
     pip install --upgrade pip && \
     pip install build packaging pep517 pyparsing tomli && \
     cd core && python -m build 
-    
     # Remove venv work-around
     cd ..
     deactivate
@@ -47,11 +42,6 @@ build(){
 
 run(){
     copy_templates
-
-    if [ ${#PROJECT_REMOTE_REPO} -ge $MIN_LEN_REMOTE_REPO  ] 
-    then
-        clone_project
-    fi
     build
 }
 
@@ -60,6 +50,5 @@ run(){
     then
         PROJECT_REMOTE_REPO=$1
     fi
-
 
 run
