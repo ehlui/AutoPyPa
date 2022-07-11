@@ -16,7 +16,7 @@ Now your project is ready to be deployed or used anywhere else you need to :)
 
 ### Future updates - TODOs
 
-- [ ] Creatre a windows-like script (or make it different)
+- [ ] Creatre a windows-like script (or make it different)
 - [ ] Make the process of setup.py automatic (cli for example)
 - [ ] Automatic fetching a LICENSE or creating it
   - Download/scrape from [opensource.org](https://opensource.org/licenses/MIT)
