@@ -5,6 +5,6 @@ __pycache__/
 *$py.class
 **/files
 **/logs
-core
+cloned_package
 .idea
 .DS_Store
