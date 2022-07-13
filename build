@@ -10,80 +10,74 @@
 # ------------------------------------------------------------------
 
 TMP_DIR_NAME=cloned_package
+PROJECT_PACKAGE_NAME=my_package_name
 PROJECT_REMOTE_REPO=
-DUMMY_README_PATH=./templates/README.md
 PATH_REQ_PROJECT=$(find ./templates -type f -name "requirements.txt")
-IS_README_PROJECT=$(find ./$TMP_DIR_NAME/src -type f -name "README.*" -maxdepth 1)
+IS_README_PROJECT=$(find ./$TMP_DIR_NAME/src/$PROJECT_PACKAGE_NAME -type f -name "README.*" -maxdepth 1)
 
+clone_project() {
 
-clone_project(){
-    # Remove dummy template src data
-    #rm -fR  ./templates/src/
+  git clone "$PROJECT_REMOTE_REPO" ./$TMP_DIR_NAME/src/$PROJECT_PACKAGE_NAME/
 
-    git clone $PROJECT_REMOTE_REPO ./$TMP_DIR_NAME/src/
+  # Update the dummy README for the actual cloned repo root README file
+  if [[ "${#IS_README_PROJECT[@]}" == 1 ]]; then
+    cat "$IS_README_PROJECT" >./$TMP_DIR_NAME/README.md
+  fi
 
-    # Update the dummy README for the actual cloned repo root README file
-    if [[ "${#IS_README_PROJECT[@]}" == 1 ]] 
-        then
-         cat $IS_README_PROJECT > ./$TMP_DIR_NAME/README.md
-    fi
-
-    # If it founds one single requirements.txt
-    if [[ "${#PATH_REQ_PROJECT[@]}" == 1 ]] 
-        then
-            echo "REQUIREMENTS OK"
-          # We need to copy it to have it within the package and 
-          # know what dependencies have our project
-            #cp $PATH_REQ_PROJECT ./$TMP_DIR_NAME/src
-        else
-            echo "ERROR: More than one requeriments.txt found!"
-            exit
-    fi  
+  # If it founds one single requirements.txt
+  if [[ "${#PATH_REQ_PROJECT[@]}" == 1 ]]; then
+    echo "REQUIREMENTS OK"
+    # We need to copy it to have it within the package and
+    # know what dependencies have our project
+  else
+    echo "ERROR: More than one requeriments.txt found!"
+    exit
+  fi
 }
-
-
-
 
 copy_templates() {
-    # Removing the old one if it is in
-    rm -drf $TMP_DIR_NAME 
-    # Creating the temporary dir for build our package
-    mkdir -p $TMP_DIR_NAME/src
-    # Check if we pass the remote git repo to be cloned
-    if [ ! -z "$PROJECT_REMOTE_REPO" ]
-    then
-        clone_project
-    fi
-    
-    # Copy a couple of files (setup is the most important)
-    cp  ./templates/LICENSE  ./templates/setup.py  ./$TMP_DIR_NAME
-    
-    # Removing local git repository before packaging it
-    rm -fR ./$TMP_DIR_NAME/src/.git
+  # Removing the old one if it is in
+  rm -drf $TMP_DIR_NAME
+
+  # Creating the temporary dir for build our package
+  mkdir -p $TMP_DIR_NAME/src/$PROJECT_PACKAGE_NAME
+
+  # Check if we pass the remote git repo to be cloned
+  if [ ! -z "$PROJECT_REMOTE_REPO" ]; then
+    clone_project
+  fi
+
+  # Copy a couple of files (setup is the most important)
+  cp ./templates/LICENSE ./templates/setup.py ./templates/pyproject.toml ./$TMP_DIR_NAME
+
+  # Removing local git repository before packaging it
+  rm -fR ./$TMP_DIR_NAME/src/$PROJECT_PACKAGE_NAME/.git
+
+  # [MAC-OS] Ensure no file .DS_Store exists before building
+  find . -name '.DS_Store' -type f -delete
 }
 
-build(){
-    # Use a temp venv to build packages
-    python3 -m venv venv && \
-    source venv/bin/activate && \
-    pip install --upgrade pip && \
-    pip install build packaging pep517 pyparsing tomli && \
-    cd $TMP_DIR_NAME && python -m build 
-    # Remove venv work-around
-    cd ..
-    deactivate
-    rm -r ./venv/
+build() {
+  # Use a temp venv to build packages
+  python3 -m venv venv &&
+    source venv/bin/activate &&
+    pip install --upgrade pip setuptools wheel &&
+    pip install build packaging pep517 pyparsing tomli &&
+    cd $TMP_DIR_NAME && python -m build
+  # Remove venv work-around
+  cd ..
+  deactivate
+  rm -r ./venv/
 }
 
-run(){
-    copy_templates
-    build
+run() {
+  copy_templates
+  build
 }
 
 # If variable is empty (not written) try by args
- if [  -z "$PROJECT_REMOTE_REPO" ]
-    then
-        PROJECT_REMOTE_REPO=$1
-    fi
+if [ -z "$PROJECT_REMOTE_REPO" ]; then
+  PROJECT_REMOTE_REPO=$1
+fi
 
 run
